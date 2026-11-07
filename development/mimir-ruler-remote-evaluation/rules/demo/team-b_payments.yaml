@@ -1,0 +1,10 @@
+groups:
+  # The same group name as in team-a_checkout.yaml: group names are only unique within a namespace.
+  - name: availability
+    rules:
+      - record: payments:up:sum
+        expr: sum(up{job="payments"})
+  - name: team-b/payments/latency
+    rules:
+      - record: payments:request_duration_seconds:p99
+        expr: histogram_quantile(0.99, sum by (le) (rate(request_duration_seconds_bucket{job="payments"}[5m])))

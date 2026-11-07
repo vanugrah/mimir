@@ -1,0 +1,10 @@
+groups:
+  - name: availability
+    rules:
+      - record: checkout:up:sum
+        expr: sum(up{job="checkout"})
+      - alert: CheckoutDown
+        expr: absent(up{job="checkout"})
+        for: 1m
+        labels:
+          severity: critical

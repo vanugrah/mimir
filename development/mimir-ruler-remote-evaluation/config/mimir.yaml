@@ -1,0 +1,67 @@
+# Shared by both services. The mimir service runs the write and read paths, including the
+# query-frontend. The ruler service evaluates rules remotely through that query-frontend.
+multitenancy_enabled: true
+
+memberlist:
+  join_members: [mimir:7946]
+
+distributor:
+  ring:
+    kvstore:
+      store: memberlist
+
+ingester:
+  ring:
+    # We want to start immediately.
+    final_sleep: 0s
+    replication_factor: 1
+    kvstore:
+      store: memberlist
+
+store_gateway:
+  sharding_ring:
+    replication_factor: 1
+    kvstore:
+      store: memberlist
+
+blocks_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/blocks
+  tsdb:
+    dir: /data/tsdb
+  bucket_store:
+    sync_dir: /data/tsdb-sync
+
+querier:
+  # Either "mimir" (the Mimir query engine) or "prometheus" (the Prometheus engine).
+  query_engine: ${QUERY_ENGINE:mimir}
+
+frontend:
+  # Log the rule detail headers on the query-frontend "query stats" log lines.
+  log_query_request_headers: X-Rule-Name,X-Rule-Type,X-Rule-Source,X-Rule-Namespace,X-Rule-Group
+  # Whether the query-frontend itself uses the Mimir query engine.
+  use_mimir_query_engine_for_sharding: ${FRONTEND_USE_MQE:true}
+  use_mimir_query_engine_for_splitting_and_caching_results: ${FRONTEND_USE_MQE:true}
+  enable_remote_execution: ${FRONTEND_USE_MQE:true}
+
+ruler:
+  rule_path: /data/ruler
+  evaluation_interval: 10s
+  poll_interval: 5s
+  ring:
+    kvstore:
+      store: memberlist
+  query_frontend:
+    address: dns:///mimir:9095
+    enable_rule_detail_headers: ${ENABLE_RULE_DETAIL_HEADERS:true}
+
+ruler_storage:
+  # Rules are read from <directory>/<tenant>/<namespace>.
+  backend: local
+  local:
+    directory: /etc/mimir-rules
+
+# Do not send anonymous usage reports from a dev environment.
+usage_stats:
+  enabled: false

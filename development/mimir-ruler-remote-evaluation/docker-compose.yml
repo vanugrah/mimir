@@ -1,0 +1,36 @@
+services:
+
+  mimir:
+    build:
+      context: .
+      dockerfile: dev.dockerfile
+    image: mimir-ruler-remote-evaluation
+    command:
+      - ./mimir
+      - -config.file=/etc/mimir/mimir.yaml
+      - -config.expand-env=true
+      - -target=distributor,ingester,querier,query-frontend,query-scheduler,store-gateway
+    environment:
+      - QUERY_ENGINE=${QUERY_ENGINE:-mimir}
+      - FRONTEND_USE_MQE=${FRONTEND_USE_MQE:-true}
+    volumes:
+      - ./config:/etc/mimir:ro
+    ports:
+      - 8001:8080
+
+  ruler:
+    image: mimir-ruler-remote-evaluation
+    command:
+      - ./mimir
+      - -config.file=/etc/mimir/mimir.yaml
+      - -config.expand-env=true
+      - -target=ruler
+    environment:
+      - ENABLE_RULE_DETAIL_HEADERS=${ENABLE_RULE_DETAIL_HEADERS:-true}
+    depends_on:
+      - mimir
+    volumes:
+      - ./config:/etc/mimir:ro
+      - ./rules:/etc/mimir-rules:ro
+    ports:
+      - 8002:8080

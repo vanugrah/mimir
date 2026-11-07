@@ -7,6 +7,7 @@ Mimir offers a few docker-compose based development environments for different [
 - [Monolithic mode with swift storage](./mimir-monolithic-mode-with-swift-storage)
 - [Ingest storage](./mimir-ingest-storage)
 - [Compartments](./mimir-compartments)
+- [Ruler remote evaluation](./mimir-ruler-remote-evaluation)
 
 ## Running
 
